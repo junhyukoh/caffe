@@ -291,7 +291,12 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   for (size_t layer_id = 0; layer_id < layer_names_.size(); ++layer_id) {
     layer_names_index_[layer_names_[layer_id]] = layer_id;
   }
+<<<<<<< HEAD
   ShareWeights();
+=======
+  GetLearningRateAndWeightDecay();
+  ShareWeightData();
+>>>>>>> Modifications to Net to facilitate unrolled recurrent networks
   debug_info_ = param.debug_info();
   if (Caffe::root_solver()) {
     LOG(INFO) << "Network initialization done.";
@@ -550,6 +555,7 @@ void Net<Dtype>::AppendParam(const NetParameter& param, const int layer_id,
       // Strict dimension checking -- all dims must be the same.
       CHECK(this_blob->shape() == owner_blob->shape());
     }
+<<<<<<< HEAD
     const int learnable_param_id = learnable_param_ids_[owner_net_param_id];
     learnable_param_ids_.push_back(learnable_param_id);
     if (param_spec->has_lr_mult()) {
@@ -570,6 +576,23 @@ void Net<Dtype>::AppendParam(const NetParameter& param, const int layer_id,
         has_params_decay_[learnable_param_id] = true;
         params_weight_decay_[learnable_param_id] = param_spec->decay_mult();
       }
+=======
+  }
+}
+
+template <typename Dtype>
+void Net<Dtype>::GetLearningRateAndWeightDecay() {
+  LOG(INFO) << "Collecting Learning Rate and Weight Decay.";
+  ParamSpec default_param_spec;
+  for (int i = 0; i < layers_.size(); ++i) {
+    vector<shared_ptr<Blob<Dtype> > >& layer_blobs = layers_[i]->blobs();
+    for (int j = 0; j < layer_blobs.size(); ++j) {
+      const ParamSpec* param_spec =
+          (layers_[i]->layer_param().param_size() > j) ?
+          &layers_[i]->layer_param().param(j) : &default_param_spec;
+      params_lr_.push_back(param_spec->lr_mult());
+      params_weight_decay_.push_back(param_spec->decay_mult());
+>>>>>>> Modifications to Net to facilitate unrolled recurrent networks
     }
   }
 }
@@ -993,6 +1016,7 @@ void Net<Dtype>::ToHDF5(const string& filename, bool write_diff) const {
 
 template <typename Dtype>
 void Net<Dtype>::Update() {
+<<<<<<< HEAD
   for (int i = 0; i < learnable_params_.size(); ++i) {
     learnable_params_[i]->Update();
   }
@@ -1021,6 +1045,18 @@ void Net<Dtype>::ClearParamDiffs() {
 
 template <typename Dtype>
 void Net<Dtype>::ShareWeights() {
+=======
+  // Update only the owned parameters.
+>>>>>>> Modifications to Net to facilitate unrolled recurrent networks
+  for (int i = 0; i < params_.size(); ++i) {
+    if (param_owners_[i] < 0) { continue; }
+    params_[i]->ShareData(*params_[param_owners_[i]]);
+    params_[i]->ShareDiff(*params_[param_owners_[i]]);
+  }
+}
+
+template <typename Dtype>
+void Net<Dtype>::ShareWeightData() {
   for (int i = 0; i < params_.size(); ++i) {
     if (param_owners_[i] < 0) { continue; }
     params_[i]->ShareData(*params_[param_owners_[i]]);
