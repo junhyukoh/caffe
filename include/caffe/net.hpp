@@ -97,11 +97,7 @@ class Net {
    * Note: this is called by Net::Init, and thus should normally not be
    * called manually.
    */
-<<<<<<< HEAD
   void ShareWeights();
-=======
-  void ShareWeightData();
->>>>>>> Modifications to Net to facilitate unrolled recurrent networks
 
   /**
    * @brief For an already initialized net, implicitly copies (i.e., using no
